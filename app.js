@@ -5,7 +5,10 @@ const bodyParser = require('body-parser');
 const Joi = require('joi');
 let app = express();
 
-app.use(express.json());
+// app.use(express.json());
+var jsonParser = bodyParser.json()
+ 
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 // connection details
 const mysql = require('mysql');
@@ -26,6 +29,25 @@ connection.connect(function(err) {
   console.log('connected as id ' + connection.threadId);
 });
 
+app.post('/api/postStudents',  function (req, res) {
+    regId = req.body.reg_id;
+    courseId = req.body.course_id;
+    studentName = req.body.name;
+    let sql = "INSERT INTO `students`(`reg_id`, `course_id`, `name`) VALUES (?,?,?)";
+    let query = connection.query(sql,[regId, courseId,studentName],(err,result)=>{
+        if(err){
+            console.error('error connecting: ' + err.stack);
+            return;
+        }else{
+            res.redirect('/getStudents');
+            console.log('student added');
+        }
+    })
+  })
+
+app.get('/', (req,res)=>{
+    res.send('hello');
+})
 //getting courses
 app.get('/getCourses',(req,res) =>{
     let sql=`SELECT * FROM courses`;
@@ -65,8 +87,8 @@ app.get('/getStudents',(req,res) =>{
             return;
           }
         
-          console.log(results);
-          res.send('Students Fetched...')
+          console.log('students fetched...');
+          res.send(results)
     })
 
 })
