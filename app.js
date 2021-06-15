@@ -5,10 +5,13 @@ const bodyParser = require('body-parser');
 const Joi = require('joi');
 let app = express();
 
-// app.use(express.json());
 var jsonParser = bodyParser.json()
+
  
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
+app.use(urlencodedParser)
+app.use(express.json());
+
 
 // connection details
 const mysql = require('mysql');
