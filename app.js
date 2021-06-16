@@ -33,16 +33,16 @@ connection.connect(function(err) {
 });
 
 app.post('/api/postStudents',  function (req, res) {
-    regId = req.body.reg_id;
-    courseId = req.body.course_id;
-    studentName = req.body.name;
+    let regId = req.body.reg_id;
+    let courseId = req.body.course_id;
+    let studentName = req.body.name;
     let sql = "INSERT INTO `students`(`reg_id`, `course_id`, `name`) VALUES (?,?,?)";
     let query = connection.query(sql,[regId, courseId,studentName],(err,result)=>{
         if(err){
             console.error('error connecting: ' + err.stack);
             return;
         }else{
-            res.redirect('/getStudents');
+            // res.redirect('/getStudents');
             console.log('student added');
         }
     })
