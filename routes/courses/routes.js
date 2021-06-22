@@ -18,4 +18,4 @@ let courses = router.get('/', (req, res) => {
      });
 });
 
-module.exports = courses;
+// module.exports = courses;
