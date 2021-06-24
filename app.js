@@ -131,23 +131,25 @@ app.post('/api/addTeacherDetails',(req,res)=>{
     let course_title = req.body.course_title;
     let sql = "select teacher_id from teachers where teacher_email = ?";
     let query = connection.query(sql,teacher_email,(err,result)=>{
-        let teacher_id = result[0];
+        let teacher_id = result[0].teacher_id;
         if(err){
             console.error(error.stack);
             return;
         }else{
             if(result.length == 0){
                 console.log('teachers does not exists')
+                res.status(400).send({message:'teacher does not exists...'})
             }else{
                 let sql = "select course_id from courses where course_title = ?"
                 let query = connection.query(sql, course_title,(err,result) => {
-                    let course_id = result[0];
+                    let course_id = result[0].course_id;
                     if(err){
                         console.error(error.stack);
                         return;
                     }else{
                         if(result.length == 0){
                             console.log('course not available')
+                            res.status(400).send({message:'course not available...'})
                         }else{
                             let sql = "INSERT INTO `teacher_details`(`teacher_id`, `course_id`) VALUES (?,?)";
                             let query = connection.query(sql,[teacher_id,course_id],(err,result)=>{
@@ -156,7 +158,9 @@ app.post('/api/addTeacherDetails',(req,res)=>{
                                     return;
                                 }else{
                                     console.log('teacher details added successfully');
-                                    res.send(result);
+                                    res.status(200).send({message:'teacher details added successfully.'})
+                                    console.log(teacher_id);
+                                    console.log(course_id)
                                 }
                             })
                         }
@@ -167,113 +171,225 @@ app.post('/api/addTeacherDetails',(req,res)=>{
     })
 })
 
+// add student details --post
+app.post('/api/addStudentDetails',(req,res)=>{
+    let student_email = req.body.student_email;
+    let course_title = req.body.course_title;
+    let sql ="select student_id from students where student_email = ?";
+    let query = connection.query(sql,student_email,(err,result)=>{
+        let student_id = result[0].student_id;
+        if(err){
+            console.error(error.stack);
+            return;
+        }else{
+            if(result.length == 0){
+                console.log('student does not exist...');
+                res.status(400).send({message:'student does not exists...'})
+
+            }else{
+                let sql = "select course_id from courses where course_title = ?";
+                let query = connection.query(sql,course_title,(err,result)=>{
+                    let course_id = result[0].course_id;
+                    if(err){
+                        console.error(error.stack);
+                        return;
+                    }else{
+                        if(result.length==0){
+                            console.log('course does not exist...');
+                            res.status(400).send({message:'course not available...'})
+
+                        }else{
+                            let sql = "insert into student_details (student_id,course_id) values (?,?)";
+                            let query = connection.query(sql,[student_id,course_id],(err,result)=>{
+                                if(err){
+                                    console.error(error.stack);
+                                    return;
+                                }else{
+                                    console.log("student detail added successfully...")
+                                    res.status(200).send({message:'student details added successfully.'})
+
+                                }
+
+                            })
+                        }
+                    }
+                })
+            }
+        }
+    })
+})
+
+
+// get queries
 app.get('/', (req,res)=>{
     res.send('hello');
 })
-//getting courses
-app.get('/getCourses',(req,res) =>{
-    let sql=`SELECT * FROM courses`;
-    let query = connection.query(sql,(err,results) => {
+//get all courses
+app.get('/api/courses',(req,res) =>{
+    let sql="select * from courses";
+    let query = connection.query(sql,(err,result) => {
         if(err) {
             console.error('error connecting: ' + err.stack);
             return;
           }
-        
-          console.log(results);
-          res.send('Courses Fetched...')
-    })
-
-})
-
-//getting courses using id
-app.get('/getCourses/:id',(req,res) =>{
-    let sql=`SELECT * FROM courses WHERE id = ${req.params.id}`;
-    let query = connection.query(sql,(err,results) => {
-        if(err) {
-            console.error('error connecting: ' + err.stack);
-            return;
+          if(result.length !==0){
+          console.log("courses fetched successfully");
+          res.status(200).send(result);
+          res.send(result);
           }
-        
-          console.log(results);
-          res.send(`Courses Fetched... for id = ${req.params.id}`)
     })
 
 })
 
-//getting students
-app.get('/getStudents',(req,res) =>{
+// get all students
+app.get('/api/students',(req,res) =>{
     let sql=`SELECT * FROM students`;
-    let query = connection.query(sql,(err,results) => {
+    let query = connection.query(sql,(err,result) => {
         if(err) {
             console.error('error connecting: ' + err.stack);
             return;
-          }
+          }if(result.length !== 0){
         
           console.log('students fetched...');
-          res.send(results)
-    })
-
-})
-
-//getting students using id
-app.get('/getStudents/:id',(req,res) =>{
-    let sql=`SELECT * FROM students WHERE id = ${req.params.id}`;
-    let query = connection.query(sql,(err,results) => {
-        if(err) {
-            console.error('error connecting: ' + err.stack);
-            return;
+          res.status(200).send(result);
           }
-        
-          console.log(results);
-          res.send(`Students Fetched... for id = ${req.params.id}`)
     })
 
 })
 
-//getting students by courseId
-app.get('/getStudentsbyCourse/:courseId',(req,res) =>{
-    let sql=`SELECT * FROM students WHERE course_id  = ${req.params.courseId}`;
-    let query = connection.query(sql,(err,results) => {
-        if(err) {
-            console.error('error connecting: ' + err.stack);
-            return;
-          }
-        
-          console.log(results);
-          res.send(`Courses Fetched... for course_id = ${req.params.courseId}`)
-    })
-
-})
-
-//getting teachers
-app.get('/getTeachers',(req,res) =>{
+// get all teachers
+app.get('/api/teachers',(req,res) =>{
     let sql=`SELECT * FROM teachers`;
-    let query = connection.query(sql,(err,results) => {
+    let query = connection.query(sql,(err,result) => {
         if(err) {
             console.error('error connecting: ' + err.stack);
             return;
           }
-        
-          console.log(results);
-          res.send('Teachers Fetched...')
-    })
-
-})
-
-//getting teachers using id
-app.get('/getTeachers/:id',(req,res) =>{
-    let sql=`SELECT * FROM teachers WHERE id = ${req.params.id}`;
-    let query = connection.query(sql,(err,results) => {
-        if(err) {
-            console.error('error connecting: ' + err.stack);
-            return;
+          if(result.length !== 0 ){
+          console.log('Teachers fetched');
+          res.status(200).send(result)
           }
-        
-          console.log(results);
-          res.send(`Teachers Fetched... for id = ${req.params.id}`)
     })
 
 })
+
+// get teacher + course taken
+app.get('/api/courseByTeacher',(req,res)=>{
+    // let sql = "SELECT users.name AS user, products.name AS favorite FROM users LEFT JOIN products ON users.favorite_product = products.id";
+
+   let sql =  "SELECT teachers.teacher_id,teachers.teacher_name,courses.course_id,courses.course_title FROM teacher_details INNER JOIN teachers ON teachers.teacher_id = teacher_details.teacher_id INNER JOIN courses ON courses.course_id = teacheer_details.course_id ORDER BY teachers.teacher_name ASC"
+   let query = connection.query(sql,(err,result)=>{
+       if(err){
+           console.error(error.stack)
+           return;
+       }else{
+           if(result.length !== 0){
+           res.status(200).send(result);
+           console.log("data fetched");
+           }else{
+               res.status(404).send({message:"can't fetch details..."});
+           }
+       }
+   })
+})
+
+app.get('/api/courseByStudents',(req,res)=>{
+    // let sql = "SELECT users.name AS user, products.name AS favorite FROM users LEFT JOIN products ON users.favorite_product = products.id";
+
+   let sql =  "SELECT students.student_id,students.student_name,courses.course_id,courses.course_title FROM student_details INNER JOIN students ON students.student_id = student_details.student_id INNER JOIN courses ON courses.course_id = student_details.course_id ORDER BY students.student_name ASC"
+   let query = connection.query(sql,(err,result)=>{
+       if(err){
+           console.error(error.stack)
+           return;
+       }else{
+           if(result.length !==0){
+           res.status(200).send(result);
+           console.log("data fetched");
+           }else{
+               res.status(404).send({message:"can't fetch data..."})
+           }
+       }
+   })
+})
+
+// teacher detail by email
+app.get('/api/teacherDetails',(req,res)=>{
+    let teacher_email = req.body.teacher_email;
+    let sql = "select * from teachers where teacher_email = ?";
+    let query = connection.query(sql,teacher_email,(err,result)=>{
+        if(err){
+            console.error(error.stack);
+            return;
+        }else{
+            let teacher_id = result[0].teacher_id;
+            let teacher_name = result[0].teacher_name;
+            let sql = "select * from teacher_details where teacher_id = ?";
+            let query = connection.query(sql,teacher_id,(err,result)=>{
+                if(err){
+                    console.error(error.stack);
+                    return;
+                }else{
+                    let course_id = result[0].course_id;
+                    if(result !== 0){
+                        let sql = "select * from courses where course_id = ?";
+                        let query = connection.query(sql,course_id,(err,result)=>{
+                            if(err){
+                                console.error(error.stack);
+                                return;
+                            }else{
+                                if(result.length !== 0){
+                                    res.status(404).send({"teacherEmail" : teacher_email,"teacher name":teacher_name,"course name":result[0].course_title});
+                                    console.log("details fetched");
+                                }
+                            }
+                        })
+                    }
+                }
+            })
+            
+        }
+    })
+})
+
+// student detail by email
+app.get('/api/studentDetails',(req,res)=>{
+    let student_email = req.params.student_email;
+    let sql = "select * from students where student_email = ?";
+    let query = connection.query(sql,student_email,(err,result)=>{
+        if(err){
+            console.error(error.stack);
+            return;
+        }else{
+            let student_id = result[0].student_id;
+            let student_name = result[0].student_name;
+            let sql = "select * from student_details where student_id = ?";
+            let query = connection.query(sql,student_id,(err,result)=>{
+                if(err){
+                    console.error(error.stack);
+                    return;
+                }else{
+                    let course_id = result[0].course_id;
+                    if(result !== 0){
+                        let sql = "select * from courses where course_id = ?";
+                        let query = connection.query(sql,course_id,(err,result)=>{
+                            if(err){
+                                console.error(error.stack);
+                                return;
+                            }else{
+                                if(result.length !== 0){
+                                    res.status(404).send({"student email" : student_email,"student name":student_name,"course name":result[0].course_title});
+                                    console.log("details fetched");
+                                }
+                            }
+                        })
+                    }
+                }
+            })
+            
+        }
+    })
+})
+
 
 
 app.listen(3000, function () {
