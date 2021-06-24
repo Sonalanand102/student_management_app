@@ -33,22 +33,25 @@ connection.connect(function(err) {
 });
 
 // post courses
-app.post('/api/postCourses',(req,res)=>{
-    let sql = `SELECT * FROM courses WHERE course_title = ${req.body.course_title}`;
-    let query = connection.query(sql,(err,result)=>{
+app.post('/api/addCourses',(req,res)=>{
+    let course_title = req.body.course_title;
+    let sql = "SELECT * FROM `courses` WHERE course_title = ?";
+    let query = connection.query(sql,course_title,(err,result)=>{
         if(err){
             console.error('error connecting: ' + err.stack);           
             return;
         }else{
             if(result.length == 0){
-                let sql = `INSERT INTO courses( course_title) VALUES ('${req.body.course_title}')`;
-                if(err){
-                    console.error('error connecting: ' + err.stack);           
-                    return;
-                }else{
-                    console.log('course added');
-                    res.status(201).send({message:'Course added successfully'});
-                }
+                let sql = `INSERT INTO courses( course_title) VALUES ('${course_title}')`;
+                let query = connection.query(sql,(err,result)=>{
+                    if(err){
+                        console.error('error connecting: ' + err.stack);           
+                        return;
+                    }else{
+                        console.log(result);
+                        res.status(201).send({message:'Course added successfully'});
+                    }
+                })
             }else{
                 console.log('course already exists');
                 res.status(200).send({message:'course already exists please retry!!!'});
@@ -58,25 +61,25 @@ app.post('/api/postCourses',(req,res)=>{
 })
 
 // post students
-app.post('/api/postStudents',  function (req, res) {
-    let regId = req.body.reg_id;
-    let courseId = req.body.course_id;
+app.post('/api/addStudents',  function (req, res) {
+    let studentEmail = req.body.student_email;
+    // let courseId = req.body.course_id;
     let studentName = req.body.student_name;
-    let sql = `SELECT * FROM students WHERE reg_id = ${regId}`;
-    let query = connection.query(sql,(err,result)=>{
+    let sql = `SELECT * FROM students WHERE student_email = ?`;
+    let query = connection.query(sql,studentEmail,(err,result)=>{
         if(err){
             console.error('error connecting: ' + err.stack);
             
             return;
         }else{
             if(result.length == 0){
-                let sql = "INSERT INTO `students`(`reg_id`, `course_id`, `student_name`) VALUES (?,?,?)";
-                let query = connection.query(sql,[regId,courseId,studentName],(err,result)=>{
+                let sql = "INSERT INTO `students`(`student_email`, `student_name`) VALUES (?,?)";
+                let query = connection.query(sql,[studentEmail,studentName],(err,result)=>{
                     if(err){
-                        console.error('error connecting: ' + err.stack);
+                        console.error('error : ' + err.stack);
                         return;
                     }else{
-                        console.log('student added');
+                        console.log(result);
                         res.status(201).send({message:'student added successfully'});
                     }
 
@@ -92,8 +95,76 @@ app.post('/api/postStudents',  function (req, res) {
   })
 
 // Post teachers
-app.post('/api/postTeachers',(req,res)=>{
+app.post('/api/addTeachers',(req,res)=>{
+    let teacherEmail = req.body.teacher_email;
+    let teacherName = req.body.teacher_name;
+    let sql = "SELECT * FROM `teachers` WHERE teacher_email = ?";
+    let query = connection.query(sql,teacherEmail,(err,result)=>{
+        if(err){
+            console.error("error : "+ err.stack);
+            return;
+        }else{
+            if(result.length == 0){
+                let sql = "INSERT INTO `teachers`(`teacher_email`, `teacher_name`) VALUES (?,?)";
+                let query = connection.query(sql,[teacherEmail,teacherName],(err,result)=>{
+                    if(err){
+                        console.error("error : "+ err.stack);
+                return;
+                    }else{
+                        console.log(result);
+                        res.status(201).send({message:'teacher added successfully'});
+                    }
+                })
+            }else{
+                console.log(result);
+                res.status(200).send({message:'teacher already exists please retry!!!'});
 
+            }
+        }
+    })
+
+})
+
+// add teacher details -- post
+app.post('/api/addTeacherDetails',(req,res)=>{
+    let teacher_email = req.body.teacher_email;
+    let course_title = req.body.course_title;
+    let sql = "select teacher_id from teachers where teacher_email = ?";
+    let query = connection.query(sql,teacher_email,(err,result)=>{
+        let teacher_id = result[0];
+        if(err){
+            console.error(error.stack);
+            return;
+        }else{
+            if(result.length == 0){
+                console.log('teachers does not exists')
+            }else{
+                let sql = "select course_id from courses where course_title = ?"
+                let query = connection.query(sql, course_title,(err,result) => {
+                    let course_id = result[0];
+                    if(err){
+                        console.error(error.stack);
+                        return;
+                    }else{
+                        if(result.length == 0){
+                            console.log('course not available')
+                        }else{
+                            let sql = "INSERT INTO `teacher_details`(`teacher_id`, `course_id`) VALUES (?,?)";
+                            let query = connection.query(sql,[teacher_id,course_id],(err,result)=>{
+                                if(err){
+                                    console.error(error.stack);
+                                    return;
+                                }else{
+                                    console.log('teacher details added successfully');
+                                    res.send(result);
+                                }
+                            })
+                        }
+                    }
+                })
+            }
+        }
+    })
 })
 
 app.get('/', (req,res)=>{
