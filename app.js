@@ -19,7 +19,7 @@ const mysql = require('mysql');
 let connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
-  password : '',
+  password : 'password',
   database : 'college_app'
 });
 
@@ -131,7 +131,8 @@ app.post('/api/addTeacherDetails',(req,res)=>{
     let course_title = req.body.course_title;
     let sql = "select teacher_id from teachers where teacher_email = ?";
     let query = connection.query(sql,teacher_email,(err,result)=>{
-        let teacher_id = result[0].teacher_id;
+        console.log( 'result is', result)
+        // let teacher_id = result[0].teacher_id;
         if(err){
             console.error(error.stack);
             return;
@@ -140,6 +141,7 @@ app.post('/api/addTeacherDetails',(req,res)=>{
                 console.log('teachers does not exists')
                 res.status(400).send({message:'teacher does not exists...'})
             }else{
+                let teacher_id = result[0].teacher_id;
                 let sql = "select course_id from courses where course_title = ?"
                 let query = connection.query(sql, course_title,(err,result) => {
                     let course_id = result[0].course_id;
@@ -151,10 +153,11 @@ app.post('/api/addTeacherDetails',(req,res)=>{
                             console.log('course not available')
                             res.status(400).send({message:'course not available...'})
                         }else{
+                            console.log('Teacher id is ', teacher_id, result[0])
                             let sql = "INSERT INTO `teacher_details`(`teacher_id`, `course_id`) VALUES (?,?)";
                             let query = connection.query(sql,[teacher_id,course_id],(err,result)=>{
                                 if(err){
-                                    console.error(error.stack);
+                                    console.error(err.stack);
                                     return;
                                 }else{
                                     console.log('teacher details added successfully');
